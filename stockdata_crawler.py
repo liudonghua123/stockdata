@@ -10,7 +10,9 @@ import logging
 from ast import literal_eval
 from tablib import Dataset
 
-pattern = re.compile("^.*?\((.+)\)$")
+jsonDataPattern = re.compile("^.*?\((.+)\)$")
+jsonKeyPattern = re.compile("(?<=,|{)(\w+)(?=:)")
+jsonValuePattern = re.compile("(?<=:)(')|(')(?=,|})")
 
 class Crawler:
     def __init__(self, url_template, date, count):
@@ -46,17 +48,20 @@ class Crawler:
             # html = connection.read().decode("gb2312")
             html = connection.read().decode("gb18030")
             # Fix json.decoder.JSONDecodeError: Expecting property name enclosed in double quotes
-            # html = html.replace("\'", "\"")
-            html = re.sub(r"(\w+):", lambda m: '"{content}":'.format(content=m.group(1)), html)
+            # html = re.sub(jsonValuePattern, lambda m: '"', html)
+            # If use literal_eval, then jsonKeyPattern substitution is optional
+            html = re.sub(jsonKeyPattern, lambda m: '"{content}"'.format(content=m.group(1)), html)
             connection.close()
-            match = re.search(pattern, html)
+            match = re.search(jsonDataPattern, html)
             if not match:
                 print('doRequest({url}) did not get expected data'.format(url=url))
                 return None
             # https://stackoverflow.com/questions/38694800/how-to-convert-string-into-dictionary-in-python-3?noredirect=1&lq=1
+            # Fix error with Expecting ','delimiter due to double quote in double quote, hard to write regex to substitute
             # return json.loads(match.group(1))
             return literal_eval(match.group(1))
-        except Exception as exception:
+        # https://stackoverflow.com/questions/4990718/python-about-catching-any-exception
+        except BaseException as exception:
             print('doRequest({url}) error with {exception}'.format(url=url, exception=exception))
             logging.error(traceback.format_exc())
 
