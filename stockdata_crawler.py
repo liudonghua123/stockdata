@@ -10,9 +10,12 @@ import logging
 from ast import literal_eval
 from tablib import Dataset
 
-jsonDataPattern = re.compile("^.*?\((.+)\)$")
-jsonKeyPattern = re.compile("(?<=,|{)(\w+)(?=:)")
-jsonValuePattern = re.compile("(?<=:)(')|(')(?=,|})")
+# https://docs.python.org/3/library/re.html#re.sub
+# http://www.diveintopython3.net/regular-expressions.html
+# To work around the backslash plague, you can use what is called a raw string, by prefixing the string with the letter r. This tells Python that nothing in this string should be escaped; '\t' is a tab character, but r'\t' is really the backslash character \ followed by the letter t. I recommend always using raw strings when dealing with regular expressions; otherwise, things get too confusing too quickly (and regular expressions are confusing enough already).
+jsonDataPattern = re.compile(r"^.*?\((.+)\)$")
+jsonKeyPattern = re.compile(r"(?<=,|{)(\w+)(?=:)")
+jsonValuePattern = re.compile(r"(?<=:)(')|(')(?=,|})")
 
 class Crawler:
     def __init__(self, url_template, date, count):
